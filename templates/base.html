@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1d4ed8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#060d1f" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Smart Hospital Queue System{% endblock %}</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3 CSS & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% if request.path.startswith('/admin') or (current_user.is_authenticated and current_user.is_admin and not request.path.startswith('/patient')) %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  {% else %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/patient.css') }}">
+  {% endif %}
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if request.path.startswith('/admin') or (current_user.is_authenticated and current_user.is_admin and not request.path.startswith('/patient')) %}admin-theme{% else %}patient-theme{% endif %}">
+
+  <!-- Particle Canvas Background -->
+  <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg sticky-top {% if request.path.startswith('/admin') or (current_user.is_authenticated and current_user.is_admin and not request.path.startswith('/patient')) %}admin-navbar navbar-dark{% else %}patient-navbar navbar-light{% endif %} py-2" style="position: relative; z-index: 100;">
+    <div class="container-fluid px-3 px-lg-4">
+      <a class="navbar-brand {% if request.path.startswith('/admin') %}admin-brand{% else %}patient-brand{% endif %}" href="{{ url_for('index') }}">
+        <i class="bi bi-hospital fs-3"></i>
+        <span>SmartCare <small class="fs-6 opacity-75 fw-normal">Queue</small></span>
+      </a>
+
+      <button class="navbar-toggler border-0 shadow-none p-2 rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          <li class="nav-item">
+            <a class="nav-link fw-semibold" href="{{ url_for('index') }}"><i class="bi bi-house-door me-1"></i> Home</a>
+          </li>
+
+          {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+              <li class="nav-item">
+                <a class="nav-link fw-semibold {% if request.path == '/admin/dashboard' %}active text-success{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                  <i class="bi bi-speedometer2 me-1"></i> Operations Command
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link fw-semibold {% if request.path == '/admin/departments' %}active text-success{% endif %}" href="{{ url_for('admin.manage_departments') }}">
+                  <i class="bi bi-diagram-3 me-1"></i> Departments &amp; Doctors
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link fw-semibold {% if request.path == '/admin/patients' %}active text-success{% endif %}" href="{{ url_for('admin.patients') }}">
+                  <i class="bi bi-people me-1"></i> Patient Records
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link fw-semibold {% if request.path == '/admin/stats' %}active text-success{% endif %}" href="{{ url_for('admin.stats') }}">
+                  <i class="bi bi-bar-chart me-1"></i> Analytics
+                </a>
+              </li>
+            {% elif current_user.is_patient %}
+              <li class="nav-item">
+                <a class="nav-link fw-semibold {% if request.path == '/patient/dashboard' %}active text-primary{% endif %}" href="{{ url_for('patient.dashboard') }}">
+                  <i class="bi bi-ticket-perforated me-1"></i> My Token
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link fw-semibold {% if request.path == '/patient/history' %}active text-primary{% endif %}" href="{{ url_for('patient.history') }}">
+                  <i class="bi bi-clock-history me-1"></i> Visit History
+                </a>
+              </li>
+            {% endif %}
+          {% endif %}
+        </ul>
+
+        <!-- Right User Actions -->
+        <div class="navbar-actions-group d-flex align-items-center gap-2">
+          {% if current_user.is_authenticated %}
+            <div class="d-flex align-items-center gap-2 me-2">
+              {% if current_user.is_admin %}
+                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 py-2 px-3 rounded-pill fw-bold">
+                  <i class="bi bi-shield-check me-1"></i> Admin: {{ current_user.name }}
+                </span>
+              {% else %}
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3 rounded-pill fw-semibold">
+                  <span class="live-dot me-1"></span> {{ current_user.name }}
+                </span>
+              {% endif %}
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+              <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+            </a>
+          {% else %}
+            <a href="{{ url_for('auth.patient_login') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+              <i class="bi bi-person me-1"></i> Patient Login
+            </a>
+            <a href="{{ url_for('auth.patient_register') }}" class="btn btn-primary btn-sm rounded-pill px-3">
+              <i class="bi bi-person-plus me-1"></i> Register
+            </a>
+            <a href="{{ url_for('auth.admin_login') }}" class="btn btn-dark btn-sm rounded-pill px-3 border border-secondary">
+              <i class="bi bi-shield-lock me-1"></i> Admin Portal
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages Notifications -->
+  <div class="alert-container" style="z-index: 1090;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show alert-dismiss-smooth shadow-sm mb-2" role="alert">
+            <div class="d-flex align-items-center gap-2">
+              {% if category == 'success' %}
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+              {% elif category == 'danger' or category == 'error' %}
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+              {% elif category == 'warning' %}
+                <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
+              {% else %}
+                <i class="bi bi-info-circle-fill text-info fs-5"></i>
+              {% endif %}
+              <div class="small fw-semibold">{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Modals rendered at root DOM level to avoid stacking context traps -->
+  {% block modals %}{% endblock %}
+
+  <!-- Global Footer -->
+  <footer class="py-4 mt-5 border-top {% if request.path.startswith('/admin') %}border-secondary border-opacity-25 text-secondary{% else %}border-light text-muted{% endif %}" style="backdrop-filter: blur(8px); background: {% if request.path.startswith('/admin') %}rgba(6,13,31,0.7){% else %}rgba(255,255,255,0.7){% endif %};">
+    <div class="container text-center small">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-md-start mb-2 mb-md-0">
+          <span class="fw-bold">SmartCare Queue System</span> &copy; {{ now_year }}. All rights reserved.
+        </div>
+        <div class="col-md-6 text-md-end">
+          <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1 me-2">
+            <i class="bi bi-telephone-inbound-fill me-1"></i> Emergency Hotline: <strong>911 / 108</strong>
+          </span>
+          <span class="opacity-75">Fairness: {{ max_consecutive_emergency }} Emergency → 1 Normal</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5.3 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Global Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

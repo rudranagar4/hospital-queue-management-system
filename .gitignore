@@ -1,0 +1,32 @@
+# Python Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

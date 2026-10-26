@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+
+{% block title %}Hospital Command Operations — SmartCare Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4" id="admin-dashboard-container" data-dept-id="{{ current_dept.id if current_dept else '' }}">
+
+  <!-- Top Bar: Department Tabs & Walk-in Action -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div class="w-100 w-lg-auto" style="min-width: 0;">
+      <div class="dept-pills-scroll-container align-items-center">
+        {% for dept in departments %}
+          <a href="{{ url_for('admin.dashboard', dept_id=dept.id) }}" 
+             class="dept-pill-btn {% if current_dept and dept.id == current_dept.id %}active{% endif %}">
+            <i class="bi bi-hospital"></i> {{ dept.name }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-light rounded-pill px-3 btn-sm" data-bs-toggle="modal" data-bs-target="#walkInModal">
+        <i class="bi bi-person-plus-fill text-info me-1"></i> Add Walk-In
+      </button>
+      <a href="{{ url_for('admin.stats') }}" class="btn btn-outline-secondary rounded-pill px-3 btn-sm text-light">
+        <i class="bi bi-graph-up me-1"></i> Report
+      </a>
+    </div>
+  </div>
+
+  {% if current_dept %}
+    <!-- Summary Stats Bar (2x2 Grid on Mobile, 4-col on Desktop) -->
+    <div class="row g-2 g-md-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="admin-card p-2 p-md-3 d-flex align-items-center gap-2 gap-md-3">
+          <div class="p-2 p-md-3 bg-danger bg-opacity-20 text-danger rounded-3 fs-4 fs-md-3">
+            <i class="bi bi-exclamation-diamond-fill"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bolder text-white font-monospace" id="live-count-emergency">{{ emergency_tokens|length }}</div>
+            <div class="small text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem;">Emergency</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="admin-card p-2 p-md-3 d-flex align-items-center gap-2 gap-md-3">
+          <div class="p-2 p-md-3 bg-primary bg-opacity-20 text-primary rounded-3 fs-4 fs-md-3">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bolder text-white font-monospace" id="live-count-normal">{{ normal_tokens|length }}</div>
+            <div class="small text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem;">Normal</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="admin-card p-2 p-md-3 d-flex align-items-center gap-2 gap-md-3">
+          <div class="p-2 p-md-3 bg-info bg-opacity-20 text-info rounded-3 fs-4 fs-md-3">
+            <i class="bi bi-hourglass-top"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bolder text-white font-monospace" id="live-count-total">{{ emergency_tokens|length + normal_tokens|length }}</div>
+            <div class="small text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem;">Total Queue</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="admin-card p-2 p-md-3 d-flex align-items-center gap-2 gap-md-3">
+          <div class="p-2 p-md-3 bg-success bg-opacity-20 text-success rounded-3 fs-4 fs-md-3">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bolder text-white font-monospace">{{ today_completed }}</div>
+            <div class="small text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem;">Completed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE: LEFT (NOW SERVING & CONTROLS), RIGHT (DUAL QUEUES) -->
+    <div class="row g-4">
+      
+      <!-- Left Column: NOW SERVING DISPLAY & CALL NEXT CONTROLS -->
+      <div class="col-lg-5">
+        <!-- Call Next Control Box -->
+        <div class="admin-card p-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0 text-white">Queue Dispatcher</h5>
+            <span class="badge bg-secondary bg-opacity-25 text-light border border-secondary small">
+              Shortcut: Shift + C
+            </span>
+          </div>
+
+          <form method="POST" action="{{ url_for('admin.call_next_patient', dept_id=current_dept.id) }}" class="mb-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            {% if doctors %}
+              <div class="mb-3">
+                <label class="form-label text-secondary small fw-semibold">Consulting Doctor</label>
+                <select name="doctor_id" class="form-select form-select-sm">
+                  {% for doc in doctors %}
+                    <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialization }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endif %}
+
+            <button type="submit" id="btn-call-next-submit" class="btn-call-next w-100">
+              <i class="bi bi-megaphone-fill"></i>
+              <span>Call Next Patient</span>
+            </button>
+          </form>
+
+          <!-- Starvation Prevention / Fairness Rule Meter -->
+          <div class="p-3 rounded-3 bg-black bg-opacity-40 border border-secondary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center small mb-1">
+              <span class="text-secondary">
+                <i class="bi bi-shield-lock-fill text-warning me-1"></i> Starvation Prevention Fairness:
+              </span>
+              <strong id="fairness-counter-text" class="text-light font-monospace">{{ consecutive_emergencies }} / {{ max_consecutive }}</strong>
+            </div>
+            <div class="fairness-bar">
+              <div id="fairness-progress-bar" class="fairness-progress" style="width: {{ (consecutive_emergencies / max_consecutive) * 100 }}%;"></div>
+            </div>
+            <div class="small text-secondary mt-2" style="font-size: 0.72rem;">
+              {% if consecutive_emergencies >= max_consecutive %}
+                <span class="text-warning fw-bold"><i class="bi bi-exclamation-triangle"></i> Limit reached!</span> The next call will automatically serve a waiting Normal patient.
+              {% else %}
+                Serves emergency patients first. After {{ max_consecutive }} consecutive emergencies, next call guarantees 1 normal patient.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Large "Now Serving" Display -->
+        <div id="now-serving-box" class="now-serving-box p-4 {% if now_serving and now_serving.case_type == 'emergency' %}is-emergency{% endif %}">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-uppercase fw-bolder small letter-spacing-1 text-light">
+              <i class="bi bi-broadcast me-1 text-success"></i> Real-Time Consultation Desk
+            </span>
+            <span class="badge bg-black bg-opacity-50 text-light px-2 py-1 small">
+              {{ current_dept.name }}
+            </span>
+          </div>
+
+          <div id="now-serving-content">
+            {% if now_serving %}
+              <div class="row align-items-center">
+                <div class="col-md-5 text-center text-md-start mb-3 mb-md-0">
+                  <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+                    {% if now_serving.case_type == 'emergency' %}
+                      <span class="badge badge-emergency text-uppercase px-3 py-2 fs-6">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> EMERGENCY ({{ now_serving.severity_label }})
+                      </span>
+                    {% else %}
+                      <span class="badge badge-normal text-uppercase px-3 py-2 fs-6">
+                        <i class="bi bi-person-check-fill me-1"></i> NORMAL
+                      </span>
+                    {% endif %}
+                    <span class="badge bg-dark border border-secondary text-light px-3 py-2 fs-6">
+                      {{ now_serving.status.replace('_', ' ').upper() }}
+                    </span>
+                  </div>
+
+                  <div class="now-serving-token">{{ now_serving.token_number }}</div>
+                  <h3 class="fw-bold text-white mb-0 mt-2">{{ now_serving.patient.name }}</h3>
+                  <p class="text-secondary small mb-0">
+                    Phone: {{ now_serving.patient.phone or 'N/A' }} | Age: {{ now_serving.patient.age or 'N/A' }}
+                  </p>
+                </div>
+
+                <div class="col-md-7">
+                  <div class="bg-black bg-opacity-30 rounded-3 p-3 border border-secondary border-opacity-25 mb-3">
+                    <div class="d-flex justify-content-between text-secondary small mb-1">
+                      <span>Assigned Doctor:</span>
+                      <strong class="text-light">{{ now_serving.doctor.name if now_serving.doctor else 'Attending Physician' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary small">
+                      <span>Chief Symptoms:</span>
+                      <span class="text-light">{{ now_serving.description or 'General examination' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                    {% if now_serving.status == 'called' %}
+                      <form method="POST" action="{{ url_for('admin.update_token_status', token_id=now_serving.id, new_status='in_consultation') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-info btn-sm px-3 rounded-pill">
+                          <i class="bi bi-play-fill me-1"></i> Start Consultation
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('admin.update_token_status', token_id=now_serving.id, new_status='completed') }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-success btn-sm px-3 rounded-pill fw-bold">
+                        <i class="bi bi-check2-circle me-1"></i> Complete
+                      </button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('admin.update_token_status', token_id=now_serving.id, new_status='skipped') }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-outline-warning btn-sm px-3 rounded-pill">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Skip
+                      </button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('admin.update_token_status', token_id=now_serving.id, new_status='cancelled') }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-outline-danger btn-sm px-3 rounded-pill">
+                        <i class="bi bi-x-circle me-1"></i> No-Show
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="text-center py-5 text-muted">
+                <i class="bi bi-person-slash display-4 mb-2 d-block opacity-50"></i>
+                <h4 class="fw-semibold">No Patient Currently Serving</h4>
+                <p class="small text-secondary mb-0">Click "Call Next Patient" to serve the next person in line.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: DUAL QUEUE PANES (Emergency Priority on Top, Normal FIFO Below) -->
+      <div class="col-lg-7">
+        
+        <!-- TOP: Emergency Priority Queue (heapq) -->
+        <div class="queue-pane-emergency mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-danger p-2 rounded-circle pulse-red"><i class="bi bi-lightning-fill text-white"></i></span>
+              <h5 class="pane-title mb-0">Emergency Priority Queue (Min-Heap)</h5>
+            </div>
+            <span class="badge bg-danger text-white rounded-pill px-3 py-1 font-monospace">
+              {{ emergency_tokens|length }} Waiting
+            </span>
+          </div>
+
+          <div id="emergency-queue-list" style="max-height: 280px; overflow-y: auto;">
+            {% if emergency_tokens %}
+              {% for item in emergency_tokens %}
+                <div class="queue-row-item emergency-item animate-entrance">
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="badge {{ item.severity_badge_class }} rounded-pill px-2 py-1 small fw-bold">
+                      Sev {{ item.severity }}: {{ item.severity_label }}
+                    </span>
+                    <span class="fw-bold text-white fs-5 font-monospace">{{ item.token_number }}</span>
+                    <div>
+                      <span class="d-block fw-semibold text-light">{{ item.patient.name }}</span>
+                      <span class="text-secondary small">Age: {{ item.patient.age or 'N/A' }} | Phone: {{ item.patient.phone or 'N/A' }}</span>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 rounded-pill px-2 py-1 small">
+                      High Priority
+                    </span>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-center py-4 text-muted small">
+                <i class="bi bi-check2-circle fs-3 text-secondary d-block mb-1"></i>
+                No emergency cases waiting in priority heap.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- BOTTOM: Normal FIFO Queue (deque) -->
+        <div class="queue-pane-normal">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-primary p-2 rounded-circle"><i class="bi bi-people-fill text-white"></i></span>
+              <h5 class="pane-title mb-0">Normal Routine Queue (FIFO Order)</h5>
+            </div>
+            <span class="badge bg-primary text-white rounded-pill px-3 py-1 font-monospace">
+              {{ normal_tokens|length }} Waiting
+            </span>
+          </div>
+
+          <div id="normal-queue-list" style="max-height: 280px; overflow-y: auto;">
+            {% if normal_tokens %}
+              {% for item in normal_tokens %}
+                <div class="queue-row-item normal-item animate-entrance">
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-secondary rounded-circle px-2 py-1 small text-white">#{{ loop.index }}</span>
+                    <span class="fw-bold text-white fs-5 font-monospace">{{ item.token_number }}</span>
+                    <div>
+                      <span class="d-block fw-semibold text-light">{{ item.patient.name }}</span>
+                      <span class="text-secondary small">Age: {{ item.patient.age or 'N/A' }} | Phone: {{ item.patient.phone or 'N/A' }}</span>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 rounded-pill px-2 py-1 small">
+                      Standard
+                    </span>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-center py-4 text-muted small">
+                <i class="bi bi-inbox fs-3 text-secondary d-block mb-1"></i>
+                No normal cases waiting in FIFO queue.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- WALK-IN PATIENT MODAL -->
+<div class="modal fade" id="walkInModal" tabindex="-1" aria-labelledby="walkInModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-secondary border-opacity-50">
+      <div class="modal-header border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-white" id="walkInModalLabel">
+          <i class="bi bi-person-plus-fill text-info me-2"></i> Register Walk-In Patient
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form method="POST" action="{{ url_for('admin.add_walk_in') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label text-secondary small fw-semibold">Patient Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" placeholder="Full name" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-secondary small fw-semibold">Phone Number <span class="text-danger">*</span></label>
+              <input type="tel" name="phone" class="form-control" placeholder="Contact number" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-secondary small fw-semibold">Age</label>
+              <input type="number" name="age" class="form-control" min="1" max="120" placeholder="Age">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label text-secondary small fw-semibold">Department <span class="text-danger">*</span></label>
+              <select name="department_id" class="form-select" required>
+                {% for d in departments %}
+                  <option value="{{ d.id }}" {% if current_dept and d.id == current_dept.id %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-secondary small fw-semibold">Case Type <span class="text-danger">*</span></label>
+              <select name="case_type" id="walkin-case-select" class="form-select" onchange="toggleWalkInEmergency(this.value)">
+                <option value="normal" selected>Normal Case (FIFO Queue)</option>
+                <option value="emergency">Emergency Case (Min-Heap Priority)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Emergency Severity for Walk-in -->
+          <div id="walkin-emergency-block" class="d-none p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 mb-3">
+            <label class="form-label text-danger small fw-semibold">Emergency Severity</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="severity" id="wsev1" value="1">
+                <label class="form-check-label text-danger small fw-bold" for="wsev1">1: Critical</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="severity" id="wsev2" value="2" checked>
+                <label class="form-check-label text-warning small fw-bold" for="wsev2">2: Serious</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="severity" id="wsev3" value="3">
+                <label class="form-check-label text-info small fw-bold" for="wsev3">3: Urgent</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-secondary small fw-semibold">Chief Complaint / Symptoms</label>
+            <input type="text" name="description" class="form-control" placeholder="e.g. Chest tightness, acute fracture, laceration">
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold">Issue Token & Queue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script>
+  function toggleWalkInEmergency(val) {
+    const block = document.getElementById('walkin-emergency-block');
+    if (block) {
+      if (val === 'emergency') {
+        block.classList.remove('d-none');
+      } else {
+        block.classList.add('d-none');
+      }
+    }
+  }
+</script>
+{% endblock %}

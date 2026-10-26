@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Records & Search — SmartCare Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+    <div>
+      <h2 class="fw-bold text-white mb-1">Patient Registry</h2>
+      <p class="text-secondary small mb-0">Search registered patients and inspect visit histories.</p>
+    </div>
+  </div>
+
+  <!-- Search Filter -->
+  <div class="admin-card p-3 mb-4">
+    <form method="GET" action="{{ url_for('admin.patients') }}" class="row g-2 align-items-center">
+      <div class="col-md-9 col-lg-10">
+        <div class="input-group">
+          <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by patient name, phone number, email, or token (e.g. E-001, N-002)...">
+        </div>
+      </div>
+      <div class="col-md-3 col-lg-2 d-flex gap-2">
+        <button type="submit" class="btn btn-success flex-grow-1 rounded-pill fw-bold">Search</button>
+        {% if query %}
+          <a href="{{ url_for('admin.patients') }}" class="btn btn-outline-secondary rounded-pill px-3">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Patients Table -->
+  <div class="admin-card p-4">
+    {% if patients %}
+      <div class="table-responsive">
+        <table class="table table-dark table-dark-custom align-middle mb-0">
+          <thead>
+            <tr class="text-secondary small text-uppercase">
+              <th>Patient</th>
+              <th>Contact</th>
+              <th>Age</th>
+              <th>Total Visits</th>
+              <th>Latest Token</th>
+              <th class="text-end">Registered</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in patients %}
+              {% set latest_token = p.tokens.order_by(models_Token.created_at.desc() if models_Token else None).first() %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-light fs-6">{{ p.name }}</div>
+                  <small class="text-secondary">{{ p.email }}</small>
+                </td>
+                <td>
+                  <span class="text-light font-monospace small"><i class="bi bi-telephone me-1 text-secondary"></i> {{ p.phone }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-secondary bg-opacity-25 text-light">{{ p.age or 'N/A' }} yrs</span>
+                </td>
+                <td>
+                  <span class="badge bg-info bg-opacity-20 text-info px-2 py-1 rounded-pill">
+                    {{ p.tokens.count() }} tokens
+                  </span>
+                </td>
+                <td>
+                  {% set last_tok = p.tokens.order_by(p.tokens.column_descriptions[0]['entity'].created_at.desc() if false else None).all() %}
+                  {% if last_tok and last_tok|length > 0 %}
+                    {% set t = last_tok[-1] %}
+                    <span class="fw-bold font-monospace {% if t.case_type == 'emergency' %}text-danger{% else %}text-primary{% endif %}">
+                      {{ t.token_number }}
+                    </span>
+                    <small class="d-block text-secondary">{{ t.department.name }} ({{ t.status }})</small>
+                  {% else %}
+                    <span class="text-secondary small">—</span>
+                  {% endif %}
+                </td>
+                <td class="text-end text-secondary small">
+                  {{ p.created_at.strftime('%b %d, %Y') if p.created_at else '—' }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-people fs-1 d-block mb-2 text-secondary opacity-50"></i>
+        <h5 class="fw-bold text-light">No Patients Found</h5>
+        <p class="small text-secondary">Try searching with a different term or register walk-in patients from the dashboard.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

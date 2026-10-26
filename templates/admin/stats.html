@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Hospital Analytics & Queue Metrics — SmartCare Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+    <div>
+      <h2 class="fw-bold text-white mb-1">Queue & Clinical Analytics</h2>
+      <p class="text-secondary small mb-0">Daily performance metrics, patient throughput, and triage distribution.</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+      <i class="bi bi-speedometer2 me-1"></i> Back to Live Command
+    </a>
+  </div>
+
+  <!-- Key Performance Indicators (KPIs) -->
+  <div class="row g-2 g-md-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="admin-card p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-secondary small text-uppercase fw-semibold" style="font-size: 0.72rem;">Total Patients</span>
+          <span class="badge bg-primary bg-opacity-20 text-primary p-2 rounded-circle"><i class="bi bi-people"></i></span>
+        </div>
+        <div class="display-5 fw-bold text-white font-monospace">{{ total_today }}</div>
+        <small class="text-secondary d-none d-sm-block">All digital & walk-in admissions</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="admin-card p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-secondary small text-uppercase fw-semibold" style="font-size: 0.72rem;">Average Wait</span>
+          <span class="badge bg-info bg-opacity-20 text-info p-2 rounded-circle"><i class="bi bi-stopwatch"></i></span>
+        </div>
+        <div class="display-5 fw-bold text-info font-monospace">{{ avg_wait_minutes }} <span class="fs-4">m</span></div>
+        <small class="text-secondary d-none d-sm-block">Elapsed time from booking to call</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="admin-card p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-secondary small text-uppercase fw-semibold" style="font-size: 0.72rem;">Emergency</span>
+          <span class="badge bg-danger bg-opacity-20 text-danger p-2 rounded-circle"><i class="bi bi-lightning-charge"></i></span>
+        </div>
+        <div class="display-5 fw-bold text-danger font-monospace">{{ emergency_today }}</div>
+        <small class="text-secondary d-none d-sm-block">Priority Min-Heap triage cases</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="admin-card p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-secondary small text-uppercase fw-semibold" style="font-size: 0.72rem;">Routine</span>
+          <span class="badge bg-success bg-opacity-20 text-success p-2 rounded-circle"><i class="bi bi-check-circle"></i></span>
+        </div>
+        <div class="display-5 fw-bold text-success font-monospace">{{ normal_today }}</div>
+        <small class="text-secondary d-none d-sm-block">Standard FIFO consultations</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Triage Ratio & Resolution Status -->
+    <div class="col-lg-5">
+      <div class="admin-card p-4 h-100">
+        <h5 class="fw-bold text-white mb-3">Triage Case Distribution</h5>
+
+        <!-- Progress Comparison Bar -->
+        {% set total_cases = emergency_today + normal_today %}
+        {% set emerg_pct = (emergency_today / total_cases * 100)|round(1) if total_cases > 0 else 0 %}
+        {% set norm_pct = (normal_today / total_cases * 100)|round(1) if total_cases > 0 else 0 %}
+
+        <div class="progress mb-3" style="height: 20px; border-radius: 10px; background-color: rgba(255,255,255,0.08);">
+          <div class="progress-bar bg-danger" role="progressbar" style="width: {{ emerg_pct }}%;" aria-valuenow="{{ emerg_pct }}" aria-valuemin="0" aria-valuemax="100">
+            {% if emerg_pct > 10 %}{{ emerg_pct }}%{% endif %}
+          </div>
+          <div class="progress-bar bg-primary" role="progressbar" style="width: {{ norm_pct }}%;" aria-valuenow="{{ norm_pct }}" aria-valuemin="0" aria-valuemax="100">
+            {% if norm_pct > 10 %}{{ norm_pct }}%{% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between small text-secondary mb-4">
+          <span><i class="bi bi-square-fill text-danger me-1"></i> Emergency: <strong>{{ emerg_pct }}%</strong> ({{ emergency_today }})</span>
+          <span><i class="bi bi-square-fill text-primary me-1"></i> Normal: <strong>{{ norm_pct }}%</strong> ({{ normal_today }})</span>
+        </div>
+
+        <h6 class="fw-bold text-white mb-2">Consultation Completion Status</h6>
+        <div class="p-3 bg-black bg-opacity-30 rounded-3 border border-secondary border-opacity-25">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary small">Completed Consultations:</span>
+            <span class="text-success fw-bold font-monospace">{{ completed_today }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary small">Currently In Queue:</span>
+            <span class="text-warning fw-bold font-monospace">{{ waiting_now }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-secondary small">Skipped / No-Shows / Cancelled:</span>
+            <span class="text-danger fw-bold font-monospace">{{ skipped_today }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Department-Wise Breakdown -->
+    <div class="col-lg-7">
+      <div class="admin-card p-4 h-100">
+        <h5 class="fw-bold text-white mb-3">Department Workload Breakdown</h5>
+        <div class="table-responsive">
+          <table class="table table-dark table-dark-custom align-middle mb-0">
+            <thead>
+              <tr class="text-secondary small text-uppercase">
+                <th>Department</th>
+                <th>Total Today</th>
+                <th>Emergency</th>
+                <th>Normal</th>
+                <th>Waiting</th>
+                <th class="text-end">Completed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dept_stats %}
+                <tr>
+                  <td class="fw-bold text-light">{{ d.name }}</td>
+                  <td class="font-monospace">{{ d.total }}</td>
+                  <td>
+                    <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 rounded-pill px-2 py-1">
+                      {{ d.emergency }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-25 rounded-pill px-2 py-1">
+                      {{ d.normal }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 rounded-pill px-2 py-1">
+                      {{ d.waiting }}
+                    </span>
+                  </td>
+                  <td class="text-end text-success font-monospace fw-bold">{{ d.completed }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,438 @@
+/* ==========================================================================
+   PATIENT PANEL — Medical Clean Aesthetic
+   Blue / Cyan / Soft Gradients + Animations
+   ========================================================================== */
+
+.patient-theme {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(37, 99, 235, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+    linear-gradient(160deg, #f0f7ff 0%, #e8f0ff 40%, #f2f8ff 70%, #edfbff 100%);
+  background-attachment: fixed;
+  color: #1e293b;
+}
+
+/* ==========================================
+   PATIENT NAVBAR
+   ========================================== */
+.patient-navbar {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+  box-shadow: 0 4px 24px -4px rgba(37, 99, 235, 0.08);
+  transition: all 0.3s ease;
+}
+
+.patient-brand {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ==========================================
+   ACTIVE TOKEN CARD — SPECTACULAR
+   ========================================== */
+.active-token-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f5f9ff 100%);
+  border: 2px solid #bfdbfe;
+  border-radius: 26px;
+  box-shadow:
+    0 24px 48px -12px rgba(37, 99, 235, 0.14),
+    0 8px 16px -4px rgba(37, 99, 235, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.4s var(--ease-spring);
+}
+
+/* Rainbow top gradient bar */
+.active-token-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981, #a855f7, #3b82f6);
+  background-size: 300% 100%;
+  animation: gradientFlow 4s ease infinite;
+}
+
+/* Subtle grid inside card */
+.active-token-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.02) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+}
+
+.active-token-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 30px 60px -12px rgba(37, 99, 235, 0.20),
+    0 12px 24px -4px rgba(37, 99, 235, 0.08);
+}
+
+.active-token-card.emergency-border {
+  border-color: #fca5a5;
+  box-shadow:
+    0 24px 48px -12px rgba(239, 68, 68, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ==========================================
+   HUGE TOKEN NUMBER
+   ========================================== */
+.token-huge-number {
+  font-family: var(--font-heading);
+  font-size: clamp(2.35rem, 8.5vw, 4rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #1d4ed8 0%, #0284c7 80%, #06b6d4 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 4s ease infinite, float 5s ease-in-out infinite;
+}
+
+.token-huge-number.emergency {
+  background: linear-gradient(135deg, #dc2626 0%, #ea580c 80%, #f97316 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 2s ease infinite, heartbeat 1.8s ease-in-out infinite;
+}
+
+/* ==========================================
+   STATUS PROGRESSION STEPS
+   ========================================== */
+.queue-status-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 2rem 0;
+  padding: 0 10px;
+}
+
+/* Connecting line */
+.queue-status-steps::before {
+  content: '';
+  position: absolute;
+  top: 19px;
+  left: 10%;
+  right: 10%;
+  height: 4px;
+  background: #e2e8f0;
+  z-index: 1;
+  border-radius: 4px;
+}
+
+/* Animated progress line overlay */
+.queue-status-steps::after {
+  content: '';
+  position: absolute;
+  top: 19px;
+  left: 10%;
+  height: 4px;
+  background: linear-gradient(90deg, #10b981, #2563eb, #7c3aed);
+  z-index: 2;
+  border-radius: 4px;
+  transition: width 0.8s var(--ease-spring);
+  width: var(--progress-width, 0%);
+}
+
+.status-step {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  flex: 1;
+}
+
+.status-step-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.6rem auto;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-weight: 700;
+  transition: all 0.4s var(--ease-bounce);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.status-step.completed .status-step-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #6ee7b7;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  transform: scale(1.05);
+}
+
+.status-step.active .status-step-icon {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border-color: #93c5fd;
+  color: #fff;
+  box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.18);
+  transform: scale(1.1);
+  animation: stepPulse 2s ease-in-out infinite;
+}
+
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.15); }
+  50%       { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0.05); }
+}
+
+.status-step.active.called-step .status-step-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #fca5a5;
+  color: #fff;
+  animation: pulseGlowRed 1.6s ease-in-out infinite;
+  transform: scale(1.15);
+}
+
+.status-step-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  transition: color 0.3s ease;
+}
+
+.status-step.active .status-step-label  { color: #1d4ed8; font-weight: 700; }
+.status-step.completed .status-step-label { color: #059669; }
+
+/* ==========================================
+   METRIC PILL STATS
+   ========================================== */
+.metric-pill {
+  background: linear-gradient(145deg, #f8faff 0%, #f0f6ff 100%);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  text-align: center;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  transition: all 0.3s var(--ease-spring);
+}
+
+.metric-pill:hover {
+  transform: translateY(-3px);
+  border-color: rgba(37, 99, 235, 0.25);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.10);
+}
+
+.metric-pill .metric-val {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1d4ed8, #0284c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
+}
+
+.metric-pill .metric-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #64748b;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+/* ==========================================
+   CASE TYPE SELECTION CARDS
+   ========================================== */
+.case-type-card {
+  cursor: pointer;
+  border: 2px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.4rem;
+  transition: all 0.3s var(--ease-spring);
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.case-type-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none !important;
+}
+
+.case-type-card input[type="radio"] {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.case-type-card:hover {
+  border-color: #93c5fd;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
+}
+
+.case-type-card.selected-normal {
+  border-color: #2563eb;
+  background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.18);
+  transform: translateY(-3px);
+}
+
+.case-type-card.selected-emergency {
+  border-color: #ef4444;
+  background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.18);
+  transform: translateY(-3px);
+  animation: selectedEmergencyBorder 2s ease-in-out infinite;
+}
+
+@keyframes selectedEmergencyBorder {
+  0%, 100% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.18); }
+  50%       { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.35); }
+}
+
+/* ==========================================
+   PATIENT HISTORY TABLE ROWS
+   ========================================== */
+.history-row {
+  transition: all 0.2s ease;
+}
+
+.history-row:hover {
+  background: rgba(37, 99, 235, 0.04) !important;
+  transform: scale(1.003);
+}
+
+/* ==========================================
+   BOOKING FORM — ANIMATED FIELDS
+   ========================================== */
+.form-control-patient {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  background: #fff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.form-control-patient:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  outline: none;
+  transform: scale(1.005);
+}
+
+/* ==========================================
+   "YOUR TURN" MODAL ANIMATION
+   ========================================== */
+.call-modal-overlay {
+  animation: fadeInScale 0.4s var(--ease-bounce) both;
+}
+
+.call-modal-content {
+  animation: slideUpModal 0.5s var(--ease-spring) both;
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(40px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0) scale(1);        opacity: 1; }
+}
+
+/* ==========================================
+   PATIENT MOBILE RESPONSIVENESS
+   ========================================== */
+@media (max-width: 768px) {
+  .active-token-card {
+    padding: 1.35rem 1rem !important;
+    border-radius: 20px;
+  }
+
+  .queue-status-steps {
+    margin: 1.5rem 0;
+    padding: 0 4px;
+  }
+
+  .status-step-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+    border-width: 2.5px;
+    margin-bottom: 0.35rem;
+  }
+
+  .queue-status-steps::before,
+  .queue-status-steps::after {
+    top: 17px;
+    left: 8%;
+    right: 8%;
+    height: 3px;
+  }
+
+  .status-step-label {
+    font-size: 0.7rem;
+    line-height: 1.15;
+    max-width: 68px;
+    margin: 0 auto;
+    word-break: break-word;
+  }
+
+  .metric-pill {
+    padding: 0.85rem 0.6rem;
+    border-radius: 14px;
+  }
+
+  .metric-pill .metric-val {
+    font-size: clamp(1.2rem, 5vw, 1.7rem);
+  }
+
+  .metric-pill .metric-label {
+    font-size: 0.72rem;
+  }
+
+  .case-type-card {
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-step-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.72rem;
+  }
+
+  .queue-status-steps::before,
+  .queue-status-steps::after {
+    top: 15px;
+  }
+
+  .status-step-label {
+    font-size: 0.64rem;
+    max-width: 58px;
+  }
+
+  .call-modal-content {
+    padding: 2rem 1.25rem !important;
+    border-radius: 22px !important;
+  }
+}

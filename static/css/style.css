@@ -1,0 +1,897 @@
+/* ==========================================================================
+   HOSPITAL SMART QUEUE MANAGEMENT SYSTEM
+   Premium Fluid Animations & Scroll-Reveal Design System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+
+  /* === Color Palette === */
+  --patient-primary: #1d4ed8;
+  --patient-primary-light: #3b82f6;
+  --patient-accent: #06b6d4;
+  --patient-bg: #f0f6ff;
+
+  --emergency-red: #ef4444;
+  --emergency-red-glow: rgba(239, 68, 68, 0.35);
+  --emergency-dark: #b91c1c;
+
+  --normal-blue: #2563eb;
+  --normal-blue-glow: rgba(37, 99, 235, 0.25);
+
+  --success-green: #10b981;
+  --warning-amber: #f59e0b;
+
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-shadow: 0 10px 40px -8px rgba(0, 0, 0, 0.10), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+
+  /* === Animation Timings === */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ==========================================
+   BASE RESETS & TYPOGRAPHY
+   ========================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--patient-bg);
+  color: #1e293b;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+button, .btn, .nav-link, a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+h1, .display-4 {
+  font-size: clamp(1.85rem, 5.5vw, 3.25rem);
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 4vw, 2.15rem);
+}
+
+h3 {
+  font-size: clamp(1.15rem, 3.2vw, 1.7rem);
+}
+
+h4 {
+  font-size: clamp(1.02rem, 2.6vw, 1.35rem);
+}
+
+/* ==========================================
+   CUSTOM SCROLLBAR
+   ========================================== */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: rgba(200, 215, 240, 0.15); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #93c5fd, #c4b5fd);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #3b82f6, #8b5cf6); }
+
+/* ==========================================
+   GLASSMORPHISM CARDS
+   ========================================== */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 18px;
+  transition: transform 0.4s var(--ease-spring), box-shadow 0.4s var(--ease-spring);
+  will-change: transform;
+}
+
+.glass-card:hover {
+  transform: translateY(-5px) scale(1.005);
+  box-shadow: 0 24px 50px -8px rgba(0, 0, 0, 0.13), 0 8px 20px -4px rgba(37, 99, 235, 0.08);
+}
+
+/* ==========================================
+   KEYFRAME ANIMATIONS
+   ========================================== */
+
+/* --- Entrance animations --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0);     }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+
+/* --- Pulsing glow rings --- */
+@keyframes pulseGlowRed {
+  0%   { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0.55); }
+  70%  { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0);   }
+}
+
+@keyframes pulseGlowBlue {
+  0%   { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0.5);  }
+  70%  { box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0);   }
+}
+
+@keyframes pulseGlowGreen {
+  0%   { box-shadow: 0 0 0 0   rgba(16, 185, 129, 0.55); }
+  70%  { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(16, 185, 129, 0);   }
+}
+
+/* --- Continuous floating effect --- */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg);    }
+  33%       { transform: translateY(-8px) rotate(0.5deg); }
+  66%       { transform: translateY(-4px) rotate(-0.5deg);}
+}
+
+/* --- Shimmer sweep (skeleton/highlight) --- */
+@keyframes shimmer {
+  0%   { background-position: -400% 0; }
+  100% { background-position:  400% 0; }
+}
+
+/* --- Gradient border rotate --- */
+@keyframes rotateBorder {
+  from { --border-angle: 0deg;   }
+  to   { --border-angle: 360deg; }
+}
+
+/* --- Typewriter cursor blink --- */
+@keyframes caretBlink {
+  0%, 50% { border-color: currentColor; }
+  51%, 100%{ border-color: transparent;  }
+}
+
+/* --- Counter roll-up --- */
+@keyframes countUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* --- Token "called" heartbeat --- */
+@keyframes heartbeat {
+  0%   { transform: scale(1);    }
+  14%  { transform: scale(1.08); }
+  28%  { transform: scale(1);    }
+  42%  { transform: scale(1.05); }
+  70%  { transform: scale(1);    }
+}
+
+/* --- Animated gradient background --- */
+@keyframes gradientFlow {
+  0%   { background-position: 0% 50%;   }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%;   }
+}
+
+/* --- Particle drift --- */
+@keyframes particleDrift {
+  0%   { transform: translateY(0)   rotate(0deg);   opacity: 0.6; }
+  50%  { transform: translateY(-60px) rotate(180deg);opacity: 0.9; }
+  100% { transform: translateY(-120px) rotate(360deg);opacity: 0;  }
+}
+
+/* ==========================================
+   UTILITY ANIMATION CLASSES
+   ========================================== */
+.animate-entrance {
+  animation: fadeInUp 0.65s var(--ease-spring) both;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.55s var(--ease-spring) both;
+}
+
+.animate-fade-left {
+  animation: fadeInLeft 0.6s var(--ease-spring) both;
+}
+
+.animate-fade-right {
+  animation: fadeInRight 0.6s var(--ease-spring) both;
+}
+
+.animate-scale-in {
+  animation: fadeInScale 0.5s var(--ease-bounce) both;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.pulse-red   { animation: pulseGlowRed   2s   ease-in-out infinite; }
+.pulse-blue  { animation: pulseGlowBlue  2.5s ease-in-out infinite; }
+.pulse-green { animation: pulseGlowGreen 2s   ease-in-out infinite; }
+
+/* Stagger delays for lists */
+.stagger-1  { animation-delay: 0.08s !important; }
+.stagger-2  { animation-delay: 0.16s !important; }
+.stagger-3  { animation-delay: 0.24s !important; }
+.stagger-4  { animation-delay: 0.32s !important; }
+.stagger-5  { animation-delay: 0.40s !important; }
+.stagger-6  { animation-delay: 0.48s !important; }
+
+/* ==========================================
+   SCROLL-REVEAL SYSTEM (Intersection Observer)
+   ========================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.7s var(--ease-spring), transform 0.7s var(--ease-spring);
+}
+
+.reveal.reveal-left {
+  transform: translateX(-36px);
+}
+
+.reveal.reveal-right {
+  transform: translateX(36px);
+}
+
+.reveal.reveal-scale {
+  transform: scale(0.88);
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: translate(0) scale(1);
+}
+
+/* ==========================================
+   ANIMATED BACKGROUND DECORATIONS
+   ========================================== */
+.animated-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-bg::before,
+.animated-bg::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.animated-bg::before {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.07) 0%, transparent 70%);
+  top: -150px;
+  right: -150px;
+  animation: float 8s ease-in-out infinite;
+}
+
+.animated-bg::after {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+  bottom: -100px;
+  left: -100px;
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+/* ==========================================
+   GRADIENT HERO SECTION
+   ========================================== */
+.hero-gradient {
+  background: linear-gradient(135deg, #f0f6ff 0%, #e8efff 40%, #f5f0ff 70%, #f0f8ff 100%);
+  background-size: 300% 300%;
+  animation: gradientFlow 10s ease infinite;
+}
+
+/* ==========================================
+   NAVBAR SCROLL SHRINK
+   ========================================== */
+.navbar {
+  transition: padding 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth),
+              background 0.3s var(--ease-smooth);
+}
+
+.navbar.scrolled {
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+}
+
+/* ==========================================
+   GLASSMORPHIC NAVBAR LINK HOVER
+   ========================================== */
+.nav-link {
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--patient-primary);
+  border-radius: 2px;
+  transition: width 0.3s var(--ease-spring), left 0.3s var(--ease-spring);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 80%;
+  left: 10%;
+}
+
+/* ==========================================
+   SHIMMER LOADING SKELETON
+   ========================================== */
+.shimmer-skeleton {
+  background: linear-gradient(90deg,
+    rgba(226, 232, 240, 0.8) 25%,
+    rgba(241, 245, 249, 1.0) 50%,
+    rgba(226, 232, 240, 0.8) 75%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ==========================================
+   INTERACTIVE BADGE ENHANCEMENTS
+   ========================================== */
+.badge-emergency {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.78rem;
+  border-radius: 30px;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.badge-emergency:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 16px rgba(239, 68, 68, 0.6);
+}
+
+.badge-normal {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.35rem 0.78rem;
+  border-radius: 30px;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.badge-normal:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 16px rgba(37, 99, 235, 0.5);
+}
+
+.badge-severity-1 { background: linear-gradient(135deg, #dc2626, #991b1b) !important; color: #fff !important; }
+.badge-severity-2 { background: linear-gradient(135deg, #ea580c, #c2410c) !important; color: #fff !important; }
+.badge-severity-3 { background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #111827 !important; }
+
+/* ==========================================
+   TOKEN BADGE LARGE DISPLAY
+   ========================================== */
+.token-badge-lg {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: 12px;
+  padding: 0.25rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: transform 0.2s var(--ease-bounce);
+}
+
+.token-badge-lg:hover { transform: scale(1.08); }
+
+.token-badge-lg.emergency {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  color: #dc2626;
+  border: 1.5px solid #f87171;
+  animation: heartbeat 2s ease-in-out infinite;
+}
+
+.token-badge-lg.normal {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1d4ed8;
+  border: 1.5px solid #93c5fd;
+}
+
+/* ==========================================
+   INTERACTIVE BUTTONS
+   ========================================== */
+.btn-patient-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 0.7rem 1.6rem;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+  transition: all 0.28s var(--ease-spring);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-patient-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-patient-primary:hover {
+  color: #fff;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+}
+
+.btn-patient-primary:hover::after { opacity: 1; }
+.btn-patient-primary:active { transform: translateY(0) scale(0.98); }
+
+/* Magnetic button effect */
+.btn-magnetic {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* ==========================================
+   FLASH ALERTS
+   ========================================== */
+.alert-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1080;
+  max-width: 420px;
+}
+
+.alert-dismiss-smooth {
+  animation: fadeInRight 0.4s var(--ease-spring) both;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border: none;
+  backdrop-filter: blur(10px);
+}
+
+/* ==========================================
+   PROGRESS BARS — ANIMATED FILL
+   ========================================== */
+.animated-progress .progress-bar {
+  animation: progressFill 1.2s var(--ease-spring) both;
+  transform-origin: left;
+}
+
+@keyframes progressFill {
+  from { width: 0 !important; }
+}
+
+/* ==========================================
+   FLOATING PARTICLE CANVAS BACKGROUND
+   ========================================== */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  opacity: 0.4;
+}
+
+/* Modal Stacking Context & Clickability Enforcement */
+.modal {
+  z-index: 1060 !important;
+  pointer-events: auto !important;
+}
+
+.modal-dialog {
+  z-index: 1065 !important;
+  pointer-events: auto !important;
+}
+
+.modal-content {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1070 !important;
+}
+
+.modal-content select,
+.modal-content input,
+.modal-content button,
+.modal-content label,
+.modal-content textarea {
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+.modal-content textarea,
+.modal-content input[type="text"] {
+  cursor: text;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+
+/* ==========================================
+   GRADIENT TEXT EFFECT
+   ========================================== */
+.gradient-text {
+  background: linear-gradient(135deg, #1d4ed8 0%, #7c3aed 50%, #06b6d4 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 4s ease infinite;
+}
+
+.gradient-text-warm {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 50%, #f59e0b 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 3s ease infinite;
+}
+
+/* ==========================================
+   COUNTER NUMBER ANIMATION
+   ========================================== */
+.counter-animate {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.counter-animate span {
+  display: inline-block;
+  animation: countUp 0.6s var(--ease-bounce) both;
+}
+
+/* ==========================================
+   SECTION DIVIDERS
+   ========================================== */
+.section-divider {
+  position: relative;
+  overflow: visible;
+  text-align: center;
+  margin: 3rem 0;
+}
+
+.section-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.25), transparent);
+}
+
+.section-divider span {
+  position: relative;
+  background: var(--patient-bg);
+  padding: 0 1rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ==========================================
+   HOVER TILT CARD EFFECT
+   ========================================== */
+.tilt-card {
+  transition: transform 0.15s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* ==========================================
+   RIPPLE EFFECT ON CLICK
+   ========================================== */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: rippleExpand 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes rippleExpand {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ==========================================
+   LIVE DOT INDICATOR
+   ========================================== */
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0.6); }
+  70%  { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0);   }
+}
+
+.live-dot.red {
+  background: #ef4444;
+  animation: livePulseDanger 1.4s ease-in-out infinite;
+}
+
+@keyframes livePulseDanger {
+  0%   { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0.7); }
+  70%  { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0);   }
+}
+
+/* ==========================================
+   NUMBER TICKER FLIP
+   ========================================== */
+@keyframes flipIn {
+  from { transform: rotateX(-90deg); opacity: 0; }
+  to   { transform: rotateX(0deg);   opacity: 1; }
+}
+
+.number-flip {
+  display: inline-block;
+  animation: flipIn 0.5s var(--ease-bounce) both;
+  transform-origin: bottom;
+}
+
+/* ==========================================
+   MOBILE RESPONSIVENESS & TOUCH OPTIMIZATIONS
+   ========================================== */
+
+/* --- Tablet & Mobile Navigation (< 992px) --- */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    margin-top: 0.75rem;
+    padding: 1.15rem;
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+    animation: fadeInDown 0.35s var(--ease-spring);
+  }
+
+  .patient-navbar .navbar-collapse {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(37, 99, 235, 0.16);
+  }
+
+  .admin-navbar .navbar-collapse {
+    background: rgba(9, 16, 38, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(16, 185, 129, 0.22);
+  }
+
+  .navbar-nav .nav-link {
+    padding: 0.7rem 1rem !important;
+    border-radius: 12px;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+  }
+
+  .navbar-nav .nav-link::after {
+    display: none; /* Hide desktop underline */
+  }
+
+  .patient-navbar .navbar-nav .nav-link:hover,
+  .patient-navbar .navbar-nav .nav-link.active {
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .admin-navbar .navbar-nav .nav-link:hover,
+  .admin-navbar .navbar-nav .nav-link.active {
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .navbar-actions-group {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .admin-navbar .navbar-actions-group {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-actions-group .btn,
+  .navbar-actions-group .badge {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .patient-brand, .admin-brand {
+    font-size: 1.25rem;
+  }
+}
+
+/* --- Mobile Devices (< 768px) --- */
+@media (max-width: 768px) {
+  /* Prevent iOS zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .glass-card {
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .animated-bg::before { width: 220px; height: 220px; }
+  .animated-bg::after  { width: 160px; height: 160px; }
+
+  /* Mobile floating alert toasts */
+  .alert-container {
+    top: calc(0.75rem + env(safe-area-inset-top, 0px)) !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+
+  .alert-dismiss-smooth {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+  }
+
+  /* Responsive table scroll with touch inertia */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+    margin-bottom: 0.75rem;
+  }
+
+  .table-responsive::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  /* Modal bottom-sheet/card style on mobile */
+  .modal-dialog {
+    margin: 0.75rem auto;
+    max-width: calc(100% - 1.5rem);
+  }
+
+  .modal-content {
+    border-radius: 20px !important;
+  }
+
+  .modal-body {
+    padding: 1.25rem !important;
+  }
+
+  /* Minimum touch target size */
+  .btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-sm {
+    min-height: 36px;
+  }
+
+  .section-divider {
+    margin: 2rem 0;
+  }
+}
+
+/* --- Small Mobile Phones (< 480px) --- */
+@media (max-width: 480px) {
+  .hero-gradient {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .glass-card {
+    padding: 1rem;
+  }
+
+  .patient-brand span small,
+  .admin-brand span small {
+    display: none; /* Keep brand compact on very small screens */
+  }
+
+  .btn-patient-primary,
+  .btn-magnetic {
+    width: 100%;
+    margin-bottom: 0.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

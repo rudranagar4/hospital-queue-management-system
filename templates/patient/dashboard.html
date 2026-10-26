@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Dashboard — SmartCare Queue{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header Welcome Banner -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Hello, {{ current_user.name }}!</h2>
+      <p class="text-muted small mb-0">Welcome to your personal digital queue & appointment tracker.</p>
+    </div>
+    <div class="mt-2 mt-md-0 d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('patient.history') }}" class="btn btn-outline-primary rounded-pill btn-sm px-3">
+        <i class="bi bi-clock-history me-1"></i> Visit History
+      </a>
+      {% if not active_token %}
+        <button class="btn btn-patient-primary rounded-pill btn-sm px-3" data-bs-toggle="modal" data-bs-target="#bookTokenModal">
+          <i class="bi bi-plus-circle me-1"></i> Request Token
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if active_token %}
+    <!-- ACTIVE TOKEN LIVE VIEW CARD -->
+    <div id="active-token-data" 
+         data-token-id="{{ active_token.id }}" 
+         data-status="{{ active_token.status }}" 
+         class="active-token-card p-4 p-md-5 mb-5 animate-entrance {% if active_token.case_type == 'emergency' %}emergency-border{% endif %}">
+      
+      <div class="row align-items-center">
+        <!-- Token Number & Type -->
+        <div class="col-lg-5 text-center text-lg-start mb-4 mb-lg-0">
+          <div class="d-flex align-items-center justify-content-center justify-content-lg-start gap-2 mb-2">
+            {% if active_token.case_type == 'emergency' %}
+              <span class="badge badge-emergency text-uppercase">
+                <i class="bi bi-exclamation-octagon-fill me-1"></i> Emergency ({{ active_token.severity_label }})
+              </span>
+            {% else %}
+              <span class="badge badge-normal text-uppercase">
+                <i class="bi bi-check-circle-fill me-1"></i> Normal Case
+              </span>
+            {% endif %}
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border px-3 py-1 rounded-pill small">
+              {{ active_token.department.name }}
+            </span>
+          </div>
+
+          <div class="token-huge-number {% if active_token.case_type == 'emergency' %}emergency{% endif %} my-2">
+            {{ active_token.token_number }}
+          </div>
+          <p class="text-muted small mb-0">
+            Booked on {{ active_token.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+          </p>
+
+          <!-- Cancel Token Button (Only while status is 'waiting') -->
+          {% if active_token.status == 'waiting' %}
+            <div class="mt-3">
+              <button class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#cancelTokenModal">
+                <i class="bi bi-x-circle me-1"></i> Cancel Token
+              </button>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Live Metrics & Status Indicators -->
+        <div class="col-lg-7">
+          <!-- Stepper Progress -->
+          <div class="queue-status-steps">
+            <div id="step-waiting" class="status-step {% if active_token.status in ['waiting', 'called', 'in_consultation', 'completed'] %}active{% endif %}">
+              <div class="status-step-icon"><i class="bi bi-hourglass-split"></i></div>
+              <div class="status-step-label">Waiting in Queue</div>
+            </div>
+
+            <div id="step-called" class="status-step {% if active_token.status == 'called' %}active called-step{% elif active_token.status in ['in_consultation', 'completed'] %}completed{% endif %}">
+              <div class="status-step-icon"><i class="bi bi-bell"></i></div>
+              <div class="status-step-label">Called</div>
+            </div>
+
+            <div id="step-consulting" class="status-step {% if active_token.status == 'in_consultation' %}active{% elif active_token.status == 'completed' %}completed{% endif %}">
+              <div class="status-step-icon"><i class="bi bi-stethoscope"></i></div>
+              <div class="status-step-label">In Consultation</div>
+            </div>
+
+            <div id="step-completed" class="status-step {% if active_token.status == 'completed' %}completed{% endif %}">
+              <div class="status-step-icon"><i class="bi bi-check2"></i></div>
+              <div class="status-step-label">Completed</div>
+            </div>
+          </div>
+
+          <!-- Position & Wait Time Highlights -->
+          <div class="row g-3 mt-4">
+            <div class="col-6">
+              <div class="metric-pill">
+                <span class="metric-label">Current Queue Position</span>
+                <div id="live-position-val" class="metric-val text-primary">
+                  {% if position == 0 %}
+                    <span class="text-success"><i class="bi bi-bell-fill"></i> Your Turn</span>
+                  {% elif position == 1 %}
+                    <span class="text-primary font-weight-bold">Next in Line!</span>
+                  {% elif position is not none %}
+                    #{{ position }} in line
+                  {% else %}
+                    {{ active_token.status.replace('_', ' ').upper() }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div class="metric-pill">
+                <span class="metric-label">Estimated Wait Time</span>
+                <div id="live-wait-val" class="metric-val text-dark">
+                  {% if estimated_wait is not none and estimated_wait > 0 %}
+                    ~{{ estimated_wait }} mins
+                  {% elif position == 0 %}
+                    <span class="text-success">0 mins</span>
+                  {% else %}
+                    Immediate
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notice banner -->
+          <div class="mt-3 p-3 bg-light rounded-3 border small text-muted d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+            <div>
+              <strong>Live Telemetry:</strong> This dashboard auto-synchronizes every 5 seconds. Keep this tab open on your phone or computer to receive audio chime alerts when your token is called.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  {% else %}
+    <!-- NO ACTIVE TOKEN: PROMPT TO TAKE A TOKEN -->
+    <div class="glass-card p-5 text-center mb-5 animate-entrance">
+      <div class="d-inline-flex p-4 bg-primary bg-opacity-10 text-primary rounded-circle mb-3">
+        <i class="bi bi-ticket-perforated-fill fs-1"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-2">You Have No Active Queue Token</h3>
+      <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
+        Choose a hospital department and case severity below to secure your digital appointment spot. Avoid waiting rooms by following your estimated arrival time remotely.
+      </p>
+      <button class="btn btn-patient-primary btn-lg rounded-pill px-5 shadow-sm" data-bs-toggle="modal" data-bs-target="#bookTokenModal">
+        <i class="bi bi-plus-circle-fill me-2"></i> Book Token Now
+      </button>
+    </div>
+  {% endif %}
+
+  <!-- Available Departments Grid -->
+  <div class="mt-4">
+    <h4 class="fw-bold mb-3">Hospital Departments & Clinical Wings</h4>
+    <div class="row g-3">
+      {% for dept in departments %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border rounded-4 shadow-sm p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0 text-primary">{{ dept.name }}</h6>
+              <span class="badge bg-light text-secondary border small">{{ dept.doctors|length }} Doctors</span>
+            </div>
+            <p class="text-muted small mb-3 flex-grow-1">{{ dept.description }}</p>
+            <div>
+              {% if not active_token %}
+                <button class="btn btn-outline-primary btn-sm rounded-pill w-100" data-bs-toggle="modal" data-bs-target="#bookTokenModal" onclick="selectDepartment('{{ dept.id }}')">
+                  Select {{ dept.name }}
+                </button>
+              {% else %}
+                <span class="text-muted small"><i class="bi bi-info-circle me-1"></i> Active token in progress</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% if active_token %}
+  <!-- Cancel Token Confirmation Modal -->
+  <div class="modal fade" id="cancelTokenModal" tabindex="-1" aria-labelledby="cancelTokenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4 p-3">
+        <div class="modal-body text-center p-4">
+          <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-circle d-inline-block mb-3">
+            <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+          </div>
+          <h4 class="fw-bold mb-2">Cancel Token {{ active_token.token_number }}?</h4>
+          <p class="text-muted small">
+            Are you sure you want to cancel your position in the <strong>{{ active_token.department.name }}</strong> queue? You will forfeit your place in line.
+          </p>
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Keep Token</button>
+            <form method="POST" action="{{ url_for('patient.cancel_token', token_id=active_token.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger rounded-pill px-4">Yes, Cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- BOOK TOKEN MODAL -->
+<div class="modal fade" id="bookTokenModal" tabindex="-1" aria-labelledby="bookTokenModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg rounded-4 p-3">
+      <div class="modal-header border-0 pb-0">
+        <h4 class="modal-title fw-bold" id="bookTokenModalLabel">
+          <i class="bi bi-ticket-detailed text-primary me-2"></i> Take a Hospital Queue Token
+        </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form method="POST" action="{{ url_for('patient.book_token') }}" id="book-token-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Department Selection -->
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-secondary">Select Hospital Department <span class="text-danger">*</span></label>
+            <select name="department_id" id="modal-dept-select" class="form-select form-select-lg rounded-3" required>
+              <option value="" disabled selected>-- Choose Department --</option>
+              {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }} ({{ dept.doctors|length }} doctors on duty)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Case Type Selector -->
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-secondary">Select Case Type <span class="text-danger">*</span></label>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="case-type-card selected-normal w-100 d-block" id="card-case-normal">
+                  <div class="d-flex align-items-center gap-3">
+                    <input type="radio" name="case_type" value="normal" checked class="form-check-input mt-0 fs-5">
+                    <div>
+                      <div class="fw-bold text-primary">Normal Case</div>
+                      <small class="text-muted d-block">Routine checkups, general fever, consultations (FIFO Queue)</small>
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div class="col-md-6">
+                <label class="case-type-card w-100 d-block" id="card-case-emergency">
+                  <div class="d-flex align-items-center gap-3">
+                    <input type="radio" name="case_type" value="emergency" class="form-check-input mt-0 fs-5">
+                    <div>
+                      <div class="fw-bold text-danger">Emergency Case</div>
+                      <small class="text-muted d-block">Acute distress, trauma, high pain (Priority Min-Heap Queue)</small>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emergency Severity & Symptoms Section (Revealed when Emergency is selected) -->
+          <div id="emergency-details-section" class="d-none bg-danger bg-opacity-10 p-4 rounded-4 border border-danger border-opacity-25 mb-4">
+            <h6 class="fw-bold text-danger mb-3">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i> Emergency Severity Level
+            </h6>
+
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <div class="form-check p-0">
+                  <input class="btn-check" type="radio" name="severity" id="sev1" value="1">
+                  <label class="btn btn-outline-danger w-100 py-2 rounded-3 text-start" for="sev1">
+                    <strong class="d-block">Level 1: Critical</strong>
+                    <small class="opacity-75">Life-threatening, shock, severe trauma</small>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="form-check p-0">
+                  <input class="btn-check" type="radio" name="severity" id="sev2" value="2" checked>
+                  <label class="btn btn-outline-danger w-100 py-2 rounded-3 text-start" for="sev2">
+                    <strong class="d-block">Level 2: Serious</strong>
+                    <small class="opacity-75">Severe pain, high fever, chest pain</small>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="form-check p-0">
+                  <input class="btn-check" type="radio" name="severity" id="sev3" value="3">
+                  <label class="btn btn-outline-danger w-100 py-2 rounded-3 text-start" for="sev3">
+                    <strong class="d-block">Level 3: Urgent</strong>
+                    <small class="opacity-75">Acute discomfort requiring prompt care</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label fw-semibold small text-danger">Brief Symptoms / Notes</label>
+              <textarea name="description" class="form-control" rows="2" placeholder="Describe symptoms or injury (e.g. sharp chest pain, breathing difficulty, deep cut)"></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 pt-2">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-patient-primary rounded-pill px-5">
+              Confirm & Generate Token
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/patient.js') }}"></script>
+<script>
+  function selectDepartment(deptId) {
+    const sel = document.getElementById('modal-dept-select');
+    if (sel) {
+      sel.value = deptId;
+    }
+  }
+</script>
+{% endblock %}
