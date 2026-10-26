@@ -3,9 +3,18 @@ import os
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'hospital-smart-queue-secret-key-2026-secure!')
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL', f"sqlite:///{os.path.join(BASE_DIR, 'hospital_queue.db')}"
-    )
+    
+    # Database URL configuration (support Vercel serverless /tmp and PostgreSQL)
+    _db_url = os.environ.get('DATABASE_URL')
+    if _db_url:
+        if _db_url.startswith('postgres://'):
+            _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+        SQLALCHEMY_DATABASE_URI = _db_url
+    elif os.environ.get('VERCEL'):
+        SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/hospital_queue.db'
+    else:
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'hospital_queue.db')}"
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Queue algorithm configurations

@@ -77,22 +77,40 @@ def create_app(config_class=Config, test_config=None):
     # Initialize database tables and rebuild memory queue
     with app.app_context():
         db.create_all()
-        if Department.query.first() is None:
-            dept_data = [
-                ("General Medicine", "Routine consultations, seasonal illnesses, primary health checks."),
-                ("Cardiology", "Heart conditions, acute chest discomfort, hypertension, and cardiac care."),
-                ("Orthopedics", "Bone fractures, sprains, joint pain, spine and musculoskeletal care."),
-                ("Pediatrics", "Infant and child wellness, vaccinations, pediatric acute care."),
-                ("Emergency & Trauma", "24/7 rapid response for high-severity, critical trauma and life support.")
-            ]
-            for name, desc in dept_data:
-                db.session.add(Department(name=name, description=desc))
-            db.session.commit()
+        if not app.config.get('TESTING'):
+            if Department.query.first() is None:
+                dept_data = [
+                    ("General Medicine", "Routine consultations, seasonal illnesses, primary health checks."),
+                    ("Cardiology", "Heart conditions, acute chest discomfort, hypertension, and cardiac care."),
+                    ("Orthopedics", "Bone fractures, sprains, joint pain, spine and musculoskeletal care."),
+                    ("Pediatrics", "Infant and child wellness, vaccinations, pediatric acute care."),
+                    ("Emergency & Trauma", "24/7 rapid response for high-severity, critical trauma and life support.")
+                ]
+                for name, desc in dept_data:
+                    db.session.add(Department(name=name, description=desc))
+                db.session.commit()
+
+            # Ensure default admin account exists
+            admin = User.query.filter_by(role='admin').first()
+            if not admin:
+                admin = User(
+                    name="Hospital Administrator",
+                    email="admin@hospital.com",
+                    phone="+1-800-555-0199",
+                    age=42,
+                    role="admin"
+                )
+                admin.set_password("admin123")
+                db.session.add(admin)
+                db.session.commit()
+
         queue_manager.rebuild_from_db(app)
 
     return app
 
+# Top-level Flask application instance exported for Vercel and WSGI servers
+app = create_app()
+
 if __name__ == '__main__':
-    application = create_app()
     # Run development server (accessible locally and across local Wi-Fi for mobile testing)
-    application.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
