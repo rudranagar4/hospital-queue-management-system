@@ -12,7 +12,12 @@ csrf = CSRFProtect()
 login_manager = LoginManager()
 
 def create_app(config_class=Config, test_config=None):
-    app = Flask(__name__)
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(base_dir, 'templates'),
+        static_folder=os.path.join(base_dir, 'static')
+    )
     app.config.from_object(config_class)
     if test_config:
         app.config.update(test_config)
